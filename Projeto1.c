@@ -6,7 +6,7 @@ struct estrutura
   	{
     	char nome[50], filme[50], genero[50];
   	}film; 	
-int pega_registro(FILE *p_out, char *p_reg) //utilizado para saber se o registro est· vazio ou n„o
+int pega_registro(FILE *p_out, char *p_reg) //utilizado para saber se o registro est√° vazio ou n√£o
 {
      unsigned char bytes;
      unsigned int a=0 ;
@@ -20,40 +20,43 @@ int pega_registro(FILE *p_out, char *p_reg) //utilizado para saber se o registro
 }
 void insercao(FILE  *out,FILE *insere)
 {
-    int cod_cliente,cod_filme,temp,temp_2=0,tam_reg,tam_arq;
-	char reg[160],reg1[160*4],codfilme;
+    int cod_cliente,cod_filme,temp,temp_2=0,tam_reg,tam_arq,tam_arq2;
+	char reg[160],reg1[160*4],reg2[160*4],codfilme;
 
 	fseek(insere,0,SEEK_END); //coloca o arquivo no fim
 	tam_arq=ftell(insere);   //pega tamnho do arquivo
-	fseek(insere,0,0);	     //coloca o arquivo no inÌcio
+	fseek(insere,0,0);	     //coloca o arquivo no in√≠cio
 	
+	fseek(out,0,SEEK_END); 
+	tam_arq2=ftell(out);   //pega tamnho do arquivo
+	fseek(out,0,0);
 	tam_reg=pega_registro(out,reg);
 	if (tam_reg==0) //nada no arquivo
 	{
 		fread(&cod_cliente,sizeof(int),1,insere);
    		fread(&cod_filme,sizeof(int),1,insere);
    		fread(&film,sizeof(film),1,insere); 
-   		temp=(ftell(insere)+2)/160; //temp que ser· utilizada para se mover no arquivo insere
+   		temp=(ftell(insere)+2)/160; //temp que ser√° utilizada para se mover no arquivo insere
    		//coloca dados no registro reg
    		sprintf(reg,"##%d#%d#%s#%s#%s#%c",cod_cliente,cod_filme,film.nome,film.filme,film.genero,temp);
-   		temp_2=strlen(reg); //temp2 armazenar· o tamanho do registro reg que ser· usado para se locomover no arquivo saida
+   		temp_2=strlen(reg); //temp2 armazenar√° o tamanho do registro reg que ser√° usado para se locomover no arquivo saida
    		sprintf(reg,"%c#%d#%d#%s#%s#%s#%c",temp_2,cod_cliente,cod_filme,film.nome,film.filme,film.genero,temp);
-   		fwrite(reg, sizeof(char), strlen(reg), out); //registro È escrito no arquivo
+   		fwrite(reg, sizeof(char), strlen(reg), out); //registro √© escrito no arquivo
 	}
-	else //j· tem conte˙do
+	else //j√° tem conte√∫do
 	{	
 		fseek(out,1,0); //pula o primeiro registro
-		fread(&codfilme,sizeof(char),1,out); //salva o registro que marca se foi removido ou n„o
+		fread(&codfilme,sizeof(char),1,out); //salva o registro que marca se foi removido ou n√£o
 	  	fseek(out,0,SEEK_END); //arquivo pro fim
-		fseek(out,ftell(out)-1,0); //arquivo na penultima posiÁ„o
-		fread(&temp_2,sizeof(char),1,out); //ser· lido a temp_2 para saber em que parte do arquivo est·
+		fseek(out,ftell(out)-1,0); //arquivo na penultima posi√ß√£o
+		fread(&temp_2,sizeof(char),1,out); //ser√° lido a temp_2 para saber em que parte do arquivo est√°
 		while(((int) temp_2)=='-') //retorna enquando temp_2 for =  '-' 
 	   	{
 	   		fseek(out,-1,SEEK_CUR);
 	   		fread(&temp_2,sizeof(char),1,out);
 	   		fseek(out,-1,SEEK_CUR);
 		}
-		fseek(out,0,SEEK_END); //coloca o arquivo saida na ultima posiÁ„o para inserÁ„o
+		fseek(out,0,SEEK_END); //coloca o arquivo saida na ultima posi√ß√£o para inser√ß√£o
 		fseek(insere,((int)temp_2)*160,0); //locomove o arquivo insere com a temp_2 salva
 
 		if((((int)temp_2)*160)>=tam_arq)  //se a temp_2 for maior que o tamanho arquivo insere significa que chegou ao fim
@@ -63,63 +66,104 @@ void insercao(FILE  *out,FILE *insere)
 		fread(&cod_cliente,sizeof(int),1,insere); //le dados para iserir no registro
    		fread(&cod_filme,sizeof(int),1,insere);
    		fread(&film,sizeof(film),1,insere); 
-   		temp=(ftell(insere)+2)/160; //temp que ser· utilizada para se mover no arquivo insere
+   		temp=(ftell(insere)+2)/160; //temp que ser√° utilizada para se mover no arquivo insere
    		//coloca dados no registro reg
    		sprintf(reg,"##%d#%d#%s#%s#%s#%c",cod_cliente,cod_filme,film.nome,film.filme,film.genero,temp);
-   		temp_2=strlen(reg);//temp2 armazenar· o tamanho do registro reg que ser· usado para se locomover no arquivo saida
+   		temp_2=strlen(reg);//temp2 armazenar√° o tamanho do registro reg que ser√° usado para se locomover no arquivo saida
    		sprintf(reg,"%c#%d#%d#%s#%s#%s#%c",temp_2,cod_cliente,cod_filme,film.nome,film.filme,film.genero,temp);
-   		
-		if (((int)codfilme)=='*') //se for encontrado o marcador de remoÁ„o
+   		int salva_pos = ftell(out);
+   		int relembre=(int)temp_2,relembre2;
+   		fseek(out,0,0);
+   		char codfilme2;
+   		int salvei;
+		do
+   		{
+   			fread(&codfilme2,sizeof(char),1,out); //le o tamanho que ser√° necessario se mover at√© o proximo
+   			printf("%c",codfilme2);
+		
+			fread(&codfilme,sizeof(char),1,out);
+			if(((int)codfilme)=='-')
+			{
+				do
+				{
+					fread(&codfilme,sizeof(char),1,out);
+				}while(((int)codfilme)=='-');
+				fread(&codfilme,sizeof(char),1,out);
+			}
+			if(((int)codfilme)=='*')
+			{
+				salvei = ftell(out)-1;
+				
+			}
+			fseek(out,-2,SEEK_CUR);
+			fseek(out,((int)codfilme2),SEEK_CUR);
+			
+		   }while ((int)codfilme!='*' && tam_arq2>=ftell(out));
+		if (((int)codfilme)=='*') //se for encontrado o marcador de remo√ß√£o
 		{
 			fseek(out,0,0); //coloca arquivo no inicio do arquivo
-   			fread(&codfilme,sizeof(char),1,out); //le o tamanho que ser· necessario se mover atÈ o proximo
-
-	   		if(temp_2>((int)codfilme)) //se o tamanho da string for maior que a anterior - n„o haver· inserÁ„o nessa posiÁ„o
+   			fread(&codfilme,sizeof(char),1
+			   ,out); //le o tamanho que ser√° necessario se mover at√© o proximo
+			fseek(out,salvei-1,0);
+			fread(&temp_2,sizeof(char),1,out);
+	   		if(temp_2>((int)codfilme)) //se o tamanho da string for maior que a anterior - n√£o haver√° inser√ß√£o nessa posi√ß√£o
 	   		{
 		   		fseek(out,temp_2,0); //locomove o tamanho da string atual
-		   		fwrite(reg, sizeof(char), strlen(reg), out); //inserÁ„o ocorrera no fim do aqruivo///
-		    }
-		    else //se ele for menor haver· inserÁ„o nessa posiÁ„o
+		   		fwrite(reg, sizeof(char), strlen(reg), out); //inser√ß√£o ocorrera no fim do aqruivo///
+		    }//descobrir pq escrevendo em cima
+		    else //se ele for menor haver√° inser√ß√£o nessa posi√ß√£o
 		    {
-		   	 	fseek(out,((int)codfilme),0); //locomove para a posiÁ„o codfilme 
-				fread(reg1,sizeof(reg1),1,out); //todos dados atÈ ent„o ser„o salvos
+		   	 	fseek(out,0,0); //locomove para a posi√ß√£o codfilme 
+				fread(reg1,salvei,1,out); //todos dados at√© ent√£o ser√£o salvos
+				fseek(out,salvei-1,0); //locomove para a posi√ß√£o codfilme
+				fread(&codfilme,sizeof(char),1,out);
+				fseek(out,(int)codfilme-1,SEEK_CUR);
+				fread(reg2,sizeof(reg2),1,out);
 				fclose(out);
-				if ((out = fopen("saida.bin","w+b")) == NULL)//o arquivo È reaberto com o objetivo de reescrever ele do comeÁo
+				if ((out = fopen("saida.bin","w+b")) == NULL)//o arquivo √© reaberto com o objetivo de reescrever ele do come√ßo
 				{
 					printf("Nao foi possivel abrir o arquivo");	return ;
 				}			 
-			   	fwrite(reg, sizeof(char), strlen(reg), out); //o que foi salvo no registrador reg ser· escrito//
+			   	 //o que foi salvo no registrador reg ser√° escrito//
+			   	
+			   	relembre2=(int)codfilme;
 			   	int cont=1;
-			   	while(cont<=(((int)codfilme)-temp_2)) //preenche  '-' a qtd de vezes que È obtido em b
+			   	
+				if (temp==2) //quando teve um elemento inserido apenas e ele foi removido
+				{
+					fseek(out,-1,SEEK_CUR);
+					fwrite(reg1, sizeof(char), strlen(reg), out);
+					fseek(out,-1,SEEK_CUR); //volta 1 posi√ß√£o para substituir a temp_2//
+			   		temp_2=temp; //temp_2 ter√° o valor da temp (valor que ajuda a se mover no arquivo insere)
+			   		sprintf(reg1,"%c",'-'); //salva a temp_2 no fim do reg1
+	   				fwrite(reg1, sizeof(char), 1, out); //reg1 √© escrito no arquivo
+	   				
+				}
+				else 
+				{
+					//fseek(out,-1,SEEK_CUR);
+					fwrite(reg1, sizeof(char), strlen(reg1)-1, out);
+					fwrite(reg, sizeof(char), strlen(reg), out);
+					while(cont<(((int)codfilme)-relembre)) //preenche  '-' a qtd de vezes que √© obtido em b
 	   			{
 	   				sprintf(reg,"%c",'-');
 	   				fwrite(reg, sizeof(char), 1, out);
 	   				cont++;
 				}
-				if (temp==2) //quando teve um elemento inserido apenas e ele foi removido
-				{
-					fseek(out,-1,SEEK_CUR);
-					fwrite(reg1, sizeof(char), strlen(reg), out);
-					fseek(out,-1,SEEK_CUR); //volta 1 posiÁ„o para substituir a temp_2//
-			   		temp_2=temp; //temp_2 ter· o valor da temp (valor que ajuda a se mover no arquivo insere)
-			   		sprintf(reg1,"%c",'-'); //salva a temp_2 no fim do reg1
-	   				fwrite(reg1, sizeof(char), 1, out); //reg1 È escrito no arquivo
-	   				
-				}
-				else
-				{
-					//fseek(out,-1,SEEK_CUR);
-					fwrite(reg1, sizeof(char), strlen(reg1), out);//salva isso no reg1 no equivalente ao espaÁo sobrando//
-				   	fseek(out,-1,SEEK_CUR); //volta 1 posiÁ„o para substituir a temp_2//
-				   	temp_2=temp; //temp_2 ter· o valor da temp (valor que ajuda a se mover no arquivo insere)
+					fwrite(reg2, sizeof(char), strlen(reg2), out);//salva isso no reg1 no equivalente ao espa√ßo sobrando//
+				   	fseek(out,-1,SEEK_CUR); //volta 1 posi√ß√£o para substituir a temp_2//
+				   	temp_2=temp; //temp_2 ter√° o valor da temp (valor que ajuda a se mover no arquivo insere)
 				   	sprintf(reg1,"%c",temp_2); //salva a temp_2 no fim do reg1
-					fwrite(reg1, sizeof(char), 1, out); //reg1 È escrito no arquivo
+					fwrite(reg1, sizeof(char), 1, out); //reg1 √© escrito no arquivo
 				}
 		    }
 		}
-		else //se n„o foi removida
-			fwrite(reg, sizeof(char), strlen(reg), out); //escrever no final do arquivo
+		else //se n√£o foi removida
+			{
+				fseek(out,0,salva_pos);
+				fwrite(reg, sizeof(char), strlen(reg), out); //escrever no final do arquivo
 	}
+			}
 	fclose(out); fclose(insere);
 }
 void remocao(FILE  *remove, FILE *out)
@@ -131,71 +175,71 @@ void remocao(FILE  *remove, FILE *out)
 	tam_arq=ftell(out);//pega tamnho do arquivo
 	fseek(remove,0,SEEK_END);//coloca o arquivo no fim
 	tam_arqq=ftell(remove);//pega tamnho do arquivo
-	fseek(out,0,0); //coloca o arquivo no inÌcio
-	fseek(remove,0,0);//coloca o arquivo no inÌcio
+	fseek(out,0,0); //coloca o arquivo no in√≠cio
+	fseek(remove,0,0);//coloca o arquivo no in√≠cio
 
-	do //faÁa enquanto o  arquivo remove n„o chegou no final
+	do //fa√ßa enquanto o  arquivo remove n√£o chegou no final
 	{
 		fread(&cod_cliente,sizeof(int),1,remove); //ler cod_cliente para remover
 		fread(&cod_filme,sizeof(int),1,remove); //ler cod_filme para remover
-		fseek(out,0,0); //coloca o arquivo no inÌcio
-		do{ //faÁa enquanto o  arquivo saida n„o chegou no final
-			fseek(out,2,SEEK_CUR); //pula duas posiÁıes 
+		fseek(out,0,0); //coloca o arquivo no in√≠cio
+		do{ //fa√ßa enquanto o  arquivo saida n√£o chegou no final
+			fseek(out,2,SEEK_CUR); //pula duas posi√ß√µes 
 			fread(&codcliente,sizeof(char),1,out); //pega o cod_cliente no arquivo out
-			fseek(out,1,SEEK_CUR); //pula uma posiÁ„o
+			fseek(out,1,SEEK_CUR); //pula uma posi√ß√£o
 			fread(&codfilme,sizeof(char),1,out); //pega o cod_filme no arquivo out
 			temp1= codcliente -'0'; //transforma em int 
 			temp2= codfilme -'0';   //transforma em int 
 			if(cod_cliente==temp1 && cod_filme==temp2) //se cods a serem removidos forem iguais aos encontrados
 			{
-				fseek(out,-4,SEEK_CUR); //volta 4 posiÁıes para remover desde o comeÁo
-				fread(&codcliente,sizeof(char),1,out); //pega o valor onde fica o marcador de remoÁ„o
-				if(codcliente=='*') //se for encontrado o marcador de remoÁ„o ir· pular para a prÛxima string
+				fseek(out,-4,SEEK_CUR); //volta 4 posi√ß√µes para remover desde o come√ßo
+				fread(&codcliente,sizeof(char),1,out); //pega o valor onde fica o marcador de remo√ß√£o
+				if(codcliente=='*') //se for encontrado o marcador de remo√ß√£o ir√° pular para a pr√≥xima string
 				{
-					fseek(out,-2,SEEK_CUR);//volta 2 posiÁıes
+					fseek(out,-2,SEEK_CUR);//volta 2 posi√ß√µes
 					fread(&codcliente,sizeof(char),1,out); //pega o tamanho da string a ser removida
 					temp2= (int)codcliente ; //converte em int
-					fseek(out,temp2-1,SEEK_CUR); //pula a string com o tamanho pego e volta 1 posiÁ„o
+					fseek(out,temp2-1,SEEK_CUR); //pula a string com o tamanho pego e volta 1 posi√ß√£o
 					fread(&codcliente,sizeof(char),1,out); //ver se tem fragmento interno
 					contt=0;
 					if(codcliente=='-')
 					{
-						while(codcliente=='-')//lÍ enquanto for  '-' 
+						while(codcliente=='-')//l√™ enquanto for  '-' 
 						{
 							contt++;
 							fread(&codcliente,sizeof(char),1,out);	
 						}
 					}
-					temp2= temp2+contt ; //soma o tamnho da string mais a quantidade de '-' para ir para a prÛxima string
-					fseek(out,temp2-1,SEEK_CUR); //pula a string e volta uma posiÁ„o
+					temp2= temp2+contt ; //soma o tamnho da string mais a quantidade de '-' para ir para a pr√≥xima string
+					fseek(out,temp2-1,SEEK_CUR); //pula a string e volta uma posi√ß√£o
 				}
-				else //se for encontrado o marcador de remoÁ„o
+				else //se for encontrado o marcador de remo√ß√£o
 				{
-					fseek(out,-1,SEEK_CUR); //volta uma posiÁ„o para ficar na posiÁ„o do marcador de remoÁ„o
+					fseek(out,-1,SEEK_CUR); //volta uma posi√ß√£o para ficar na posi√ß√£o do marcador de remo√ß√£o
 					codcliente='*';
-					sprintf(reg,"%c",codcliente); //ser· adicionado nela o marcador de remoÁ„o
+					sprintf(reg,"%c",codcliente); //ser√° adicionado nela o marcador de remo√ß√£o
    					fwrite(reg, sizeof(char), 1, out); //escreve no arquivo saida
-					break; //se foi feito a remoÁ„o o loop deve ser parado
+					break; //se foi feito a remo√ß√£o o loop deve ser parado
 				}		
 			}
-			else //se cods a serem removidos n„o  forem iguais aos encontrados
+			else //se cods a serem removidos n√£o  forem iguais aos encontrados
 			{
-				fseek(out,-5,SEEK_CUR); //volta 5 posiÁıes
-				fread(&codcliente,sizeof(char),1,out);//le  o codigo q ir· conter o tamanho
+				fseek(out,-5,SEEK_CUR); //volta 5 posi√ß√µes
+				fread(&codcliente,sizeof(char),1,out);//le  o codigo q ir√° conter o tamanho
 				temp2= (int)codcliente ; //converte para int
 				fseek(out,temp2-1,SEEK_CUR); //pula o tamanho e volta 1
 				fread(&codcliente,sizeof(char),1,out); //ver se tem fragmento interno	
 				contt=0;
 				if(codcliente=='-')
 				{
-					while(codcliente=='-')//lÍ enquanto for  '-' 
+					while(codcliente=='-')//l√™ enquanto for  '-' 
 					{
 						contt++;
 						fread(&codcliente,sizeof(char),1,out);	
 					}
-					temp2= temp2+contt ;//soma o tamnho da string mais a quantidade de '-' para ir para a prÛxima string
+					temp2= temp2+contt ;//soma o tamnho da string mais a quantidade de '-' para ir para a pr√≥xima string
 				}
-				fseek(out,-1,SEEK_CUR); //volta 1 posiÁ„o
+				fseek(out,-1,SEEK_CUR); //volta 1 posi√ß√£o
 			}	
 		}while(ftell(out)<tam_arq); 
 		if(cod_cliente==temp1 && cod_filme==temp2 &&codcliente=='*') //if para sair do loop
@@ -216,17 +260,17 @@ void compactacao(FILE *out)
 	fseek(out,0,SEEK_END);//coloca o arquivo no fim
 	tam_arq=ftell(out);		//pega tamanho do arquivo			 
 	fseek(out,0,0);//coloca o arquivo no inicio
-	do //faÁa enquanto o  arquivo saida n„o chegou no final
+	do //fa√ßa enquanto o  arquivo saida n√£o chegou no final
 	{
-		fseek(out,1,SEEK_CUR); //pula uma posiÁ„o
-		fread(&codcliente,sizeof(char),1,out);//le o local que pode ter o marcador de remoÁ„o
-		fseek(out,-2,SEEK_CUR); //volta duas posiÁıes
+		fseek(out,1,SEEK_CUR); //pula uma posi√ß√£o
+		fread(&codcliente,sizeof(char),1,out);//le o local que pode ter o marcador de remo√ß√£o
+		fseek(out,-2,SEEK_CUR); //volta duas posi√ß√µes
 		fread(&codfilme,sizeof(char),1,out); //pega o valor a ser pulado
 		temp= (int)codfilme ; //converte em inteiro
 		if(temp<=4)//se chegou ao fim break
 			break;
 	//	printf("%d ",a2);
-		if(codcliente=='*') //se tiver o marcador de remoÁ„o e nem fragmento interno
+		if(codcliente=='*') //se tiver o marcador de remo√ß√£o e nem fragmento interno
 		{
 			fseek(out,temp,SEEK_CUR); //pula essa string com o valor obtido
 			fread(&codcliente,sizeof(char),1,out); //le o local que pode ter fragmento interno
@@ -236,11 +280,11 @@ void compactacao(FILE *out)
 				{	
 					fread(&codcliente,sizeof(char),1,out);	
 				}
-				fseek(out,1,SEEK_CUR);	 //pula uma posiÁ„o	para depois conseguir voltar para onde fica o valor a ser pulado
+				fseek(out,1,SEEK_CUR);	 //pula uma posi√ß√£o	para depois conseguir voltar para onde fica o valor a ser pulado
 			}
 			if(ftell(out)>=tam_arq) //se chegou ao fim break
 				break;	
-			fseek(out,-2,SEEK_CUR);//volta duas posiÁıes onde fica o valor a ser pulado
+			fseek(out,-2,SEEK_CUR);//volta duas posi√ß√µes onde fica o valor a ser pulado
 		}
 		else if(codcliente=='-') //se tiver fragmento interno
 			{
@@ -248,33 +292,33 @@ void compactacao(FILE *out)
 				{
 					fread(&codcliente,sizeof(char),1,out);				
 				}
-				fseek(out,-1,SEEK_CUR);	//volta uma posiÁ„o
+				fseek(out,-1,SEEK_CUR);	//volta uma posi√ß√£o
 			}
-		else //se n„o tiver o marcador de remoÁ„o e nem fragmento interno
+		else //se n√£o tiver o marcador de remo√ß√£o e nem fragmento interno
 		{
-			fseek(out,-1,SEEK_CUR); //volta uma posiÁ„o
+			fseek(out,-1,SEEK_CUR); //volta uma posi√ß√£o
 			fread(&codfilme,sizeof(char),1,out); //le onde dica o tamanho
 			temp= (int)codfilme ; //converte em inteiro
-			b=ftell(out);//posiÁ„o atual
-			sprintf(reg1,"%c",codfilme);//ser· salvo o tamanho na string
-			fwrite(reg1, sizeof(char), 1, out2);//ser· escrito no arquivo
-			fread(&reg1,sizeof(reg1),1,out); //ser· lido o restante do arquivo
-			fwrite(reg1, sizeof(char), temp-1, out2);//ser· escrito no arquivo
-			fseek(out,b+(temp-1),0); //pular posiÁ„o atual +tamanho a ser pulado	
+			b=ftell(out);//posi√ß√£o atual
+			sprintf(reg1,"%c",codfilme);//ser√° salvo o tamanho na string
+			fwrite(reg1, sizeof(char), 1, out2);//ser√° escrito no arquivo
+			fread(&reg1,sizeof(reg1),1,out); //ser√° lido o restante do arquivo
+			fwrite(reg1, sizeof(char), temp-1, out2);//ser√° escrito no arquivo
+			fseek(out,b+(temp-1),0); //pular posi√ß√£o atual +tamanho a ser pulado	
 		}
 		if(ftell(out)>=tam_arq)//se chegou ao fim break
 				break;
 	}while(ftell(out)<tam_arq);
 	fclose(out);
-	if ((out = fopen("saida.bin","w+b")) == NULL)//o arquivo È reaberto com o objetivo de reescrever ele do comeÁo
+	if ((out = fopen("saida.bin","w+b")) == NULL)//o arquivo √© reaberto com o objetivo de reescrever ele do come√ßo
 	{
 		printf("Nao foi possivel abrir o arquivo");	return ;
 	 }
 	fseek(out2,0,0);//volta ao inicio
-	fread(&reg1,sizeof(reg1),1,out2);//ele È escrito no reg1
+	fread(&reg1,sizeof(reg1),1,out2);//ele √© escrito no reg1
 	fseek(out2,0,SEEK_END);//volta ao fim
 	
-	fwrite(reg1, sizeof(char), ftell(out2), out);//ele È passado para o arquivo saida
+	fwrite(reg1, sizeof(char), ftell(out2), out);//ele √© passado para o arquivo saida
 	fclose(out2);fclose(out);
 }
 int main()
